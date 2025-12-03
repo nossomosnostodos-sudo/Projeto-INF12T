@@ -1,0 +1,51 @@
+CHAVES PRIMÁRIAS (PK)
+Cada classe e sua respectiva PK:
+Livro → idLivro
+Emprestimo → idEmprestimo
+Categoria → idCategoria
+Avaliação → idAvaliacao
+Sessão → idSessao
+Autor → idAutor
+PalavraChave → idPalavra
+Permissão → idPermissão
+Administrador → idAdmin
+Relatório → idRelatorio
+Notificação → idNotificacao
+HistóricoAcesso → idHistorico
+ArquivoDigital → idArquivo
+Reserva → idReserva
+Usuario → idUsuario
+
+CHAVES ESTRANGEIRAS (FK)
+Emprestimo
+FK → idUsuario
+FK → idLivro
+
+Reserva
+FK → idUsuario
+FK → idLivro
+
+Avaliação
+FK → idUsuario
+FK → idLivro
+
+HistóricoAcesso
+FK → idUsuario
+FK → idLivro
+
+Livro
+FK → idCategoria
+FK → idArquivo
+
+Relacionamentos muitos-para-muitos (criam tabelas intermediárias com PK+FK):
+Livro ↔ Autor
+FK → idLivro
+FK → idAutor
+
+Livro ↔ PalavraChave
+FK → idLivro
+FK → idPalavra
+
+Usuario ↔ Permissão
+FK → idUsuario
+FK → idPermissão
