@@ -1,0 +1,130 @@
+-- ============================
+-- TABELA: Autor
+-- ============================
+CREATE TABLE Autor (
+    id_Autor INT PRIMARY KEY,
+    nome VARCHAR(120),
+    biografia TEXT,
+    nacionalidade VARCHAR(60)
+);
+
+-- ============================
+-- TABELA: Categoria
+-- ============================
+CREATE TABLE Categoria (
+    id_Categoria INT PRIMARY KEY,
+    nome VARCHAR(80),
+    biografia TEXT
+);
+
+-- ============================
+-- TABELA: ArquivoDigital
+-- ============================
+CREATE TABLE ArquivoDigital (
+    id_Arquivo INT PRIMARY KEY,
+    tipo VARCHAR(10),
+    tamanho INT,
+    caminhoLocal VARCHAR(255),
+    protegido BOOLEAN
+);
+
+-- ============================
+-- TABELA: Livro
+-- ============================
+CREATE TABLE Livro (
+    id_Livro INT PRIMARY KEY,
+    titulo VARCHAR(200),
+    editora VARCHAR(120),
+    anoPublicacao INT,
+    ISBN VARCHAR(30),
+    status ENUM('disponivel','emprestado','restrito'),
+    id_Categoria INT,
+    id_Arquivo INT,
+    
+    FOREIGN KEY (id_Categoria) REFERENCES Categoria(id_Categoria),
+    FOREIGN KEY (id_Arquivo) REFERENCES ArquivoDigital(id_Arquivo)
+);
+
+-- ============================
+-- TABELA: Usuario
+-- ============================
+CREATE TABLE Usuario (
+    id_Usuario INT PRIMARY KEY,
+    nome VARCHAR(120),
+    email VARCHAR(120),
+    senha VARCHAR(120),
+    tipo ENUM('Aluno','Professor','Administrador'),
+    situacao ENUM('ativo','inativo'),
+    id_Emprestimo INT
+);
+
+-- ============================
+-- TABELA: Emprestimo
+-- ============================
+CREATE TABLE Emprestimo (
+    id_Emprestimo INT PRIMARY KEY,
+    status ENUM('em_andamento','concluido','atrasado'),
+    id_Livro INT,
+    data_Emprestimo DATE,
+    data_DevolucaoPrevista DATE,
+    data_DevolucaoReal DATE,
+    id_Usuario INT,
+    
+    FOREIGN KEY (id_Livro) REFERENCES Livro(id_Livro),
+    FOREIGN KEY (id_Usuario) REFERENCES Usuario(id_Usuario)
+);
+
+-- ============================
+-- TABELA: Reserva
+-- ============================
+CREATE TABLE Reserva (
+    id_Reserva INT PRIMARY KEY,
+    dataReserva DATE,
+    status ENUM('ativa','expirada','atendida'),
+    id_Usuario INT,
+    id_Livro INT,
+    
+    FOREIGN KEY (id_Usuario) REFERENCES Usuario(id_Usuario),
+    FOREIGN KEY (id_Livro) REFERENCES Livro(id_Livro)
+);
+
+-- ============================
+-- TABELA: Avaliacao
+-- ============================
+CREATE TABLE Avaliacao (
+    id_Avaliacao INT PRIMARY KEY,
+    id_Livro INT,
+    nota INT,
+    comentario TEXT,
+    dataAvaliacao DATE,
+    tipo ENUM('Aluno','Professor','Administrador'),
+    situacao ENUM('ativo','inativo'),
+    id_Usuario INT,
+    
+    FOREIGN KEY (id_Livro) REFERENCES Livro(id_Livro),
+    FOREIGN KEY (id_Usuario) REFERENCES Usuario(id_Usuario)
+);
+
+-- ============================
+-- TABELA: HistoricoAcesso
+-- ============================
+CREATE TABLE HistoricoAcesso (
+    id_Historico INT PRIMARY KEY,
+    dataAcesso DATETIME,
+    id_Livro INT,
+    id_Usuario INT,
+    
+    FOREIGN KEY (id_Livro) REFERENCES Livro(id_Livro),
+    FOREIGN KEY (id_Usuario) REFERENCES Usuario(id_Usuario)
+);
+
+-- ============================
+-- TABELA N:N: LivroAutor
+-- ============================
+CREATE TABLE LivroAutor (
+    id_Autor INT,
+    id_Livro INT,
+    
+    FOREIGN KEY (id_Autor) REFERENCES Autor(id_Autor),
+    FOREIGN KEY (id_Livro) REFERENCES Livro(id_Livro)
+);
