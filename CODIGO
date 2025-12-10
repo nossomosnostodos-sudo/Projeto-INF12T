@@ -1,433 +1,80 @@
-O ChatGPT disse:
-
-A seguir, apresento um exemplo completo de arquitetura em Python, com:
-
-✔️ Encapsulamento
-✔️ Herança
-✔️ Polimorfismo
-✔️ Abstração
-✔️ Separação de camadas → Interface / Lógica de Negócio / Persistência
-✔️ Estrutura baseada no diagrama enviado (Livro, Usuário, Administrador, Empréstimo, Avaliação etc.)
-
-Este é um modelo simplificado, mas totalmente funcional e pronto para expandir.
-
-📁 Estrutura de Pastas
-biblioteca/
-│
-├── interface/
-│   └── main.py
-│
-├── negocio/
-│   ├── entidades.py
-│   ├── servicos.py
-│   └── abstracoes.py
-│
-└── persistencia/
-    └── repositorio.py
-
-📌 1) abstrações.py (ABSTRAÇÃO)
-# negocio/abstracoes.py
-from abc import ABC, abstractmethod
-
-class Entidade(ABC):
-    """Classe abstrata que força todas as entidades a terem um ID."""
-
-    @abstractmethod
-    def __init__(self, id):
-        self._id = id  # encapsulamento
-
-    @property
-    def id(self):
-        return self._id
-
-
-class RepositorioBase(ABC):
-    """Interface para qualquer repositório."""
-
-    @abstractmethod
-    def salvar(self, objeto: Entidade):
-        pass
-
-    @abstractmethod
-    def buscar(self, id) -> Entidade:
-        pass
-
-    @abstractmethod
-    def listar(self) -> list:
-        pass
-
-📌 2) entidades.py (HERANÇA + POLIMORFISMO + ENCAPSULAMENTO)
-# negocio/entidades.py
-from datetime import datetime
-from .abstracoes import Entidade
-
-class Usuario(Entidade):
-    """Classe base de usuários"""
-
-    def __init__(self, id, nome, email):
-        super().__init__(id)
-        self._nome = nome
-        self._email = email
-
-    def exibir_perfil(self):
-        return f"Usuário: {self._nome} ({self._email})"
-
-
-class Administrador(Usuario):
-    """Herança — Administrador é um tipo de Usuário"""
-
-    def __init__(self, id, nome, email, nivel_acesso):
-        super().__init__(id, nome, email)
-        self._nivel_acesso = nivel_acesso
-
-    # Polimorfismo: sobrescrita de método
-    def exibir_perfil(self):
-        return f"[ADMIN] {self._nome} - Nível {self._nivel_acesso}"
-
-
-class Livro(Entidade):
-    def __init__(self, id, titulo, autor):
-        super().__init__(id)
-        self._titulo = titulo
-        self._autor = autor
-
-    @property
-    def titulo(self):
-        return self._titulo
-
-
-class Emprestimo(Entidade):
-    def __init__(self, id, usuario: Usuario, livro: Livro):
-        super().__init__(id)
-        self._usuario = usuario
-        self._livro = livro
-        self._data = datetime.now()
-        self._status = "aberto"
-
-    def finalizar(self):
-        self._status = "finalizado"
-
-    def __str__(self):
-        return f"Empréstimo: {self._livro.titulo} para {self._usuario._nome}"
-
-📌 3) repositorio.py (PERSISTÊNCIA SIMPLES EM MEMÓRIA)
-# persistencia/repositorio.py
-from negocio.abstracoes import RepositorioBase
-
-class RepositorioMemoria(RepositorioBase):
-    """Implementa a persistência em memória"""
-
-    def __init__(self):
-        self._dados = {}
-
-    def salvar(self, objeto):
-        self._dados[objeto.id] = objeto
-
-    def buscar(self, id):
-        return self._dados.get(id)
-
-    def listar(self):
-        return list(self._dados.values())
-
-📌 4) servicos.py (LÓGICA DE NEGÓCIO)
-# negocio/servicos.py
-from .entidades import Usuario, Administrador, Livro, Emprestimo
-
-class ServicoBiblioteca:
-
-    def __init__(self, repo_usuarios, repo_livros, repo_emprestimos):
-        self.repo_usuarios = repo_usuarios
-        self.repo_livros = repo_livros
-        self.repo_emprestimos = repo_emprestimos
-
-    def registrar_usuario(self, usuario: Usuario):
-        self.repo_usuarios.salvar(usuario)
-
-    def adicionar_livro(self, livro: Livro):
-        self.repo_livros.salvar(livro)
-
-    def realizar_emprestimo(self, id, usuario_id, livro_id):
-        usuario = self.repo_usuarios.buscar(usuario_id)
-        livro = self.repo_livros.buscar(livro_id)
-
-        emprestimo = Emprestimo(id, usuario, livro)
-        self.repo_emprestimos.salvar(emprestimo)
-        return emprestimo
-
-📌 5) interface/main.py (INTERFACE / CAMADA DE APLICAÇÃO)
-# interface/main.py
-from persistencia.repositorio import RepositorioMemoria
-from negocio.entidades import Usuario, Administrador, Livro
-from negocio.servicos import ServicoBiblioteca
-
-# Repositórios
-repo_usuarios = RepositorioMemoria()
-repo_livros = RepositorioMemoria()
-repo_emprestimos = RepositorioMemoria()
-
-# Serviço principal
-biblioteca = ServicoBiblioteca(repo_usuarios, repo_livros, repo_emprestimos)
-
-# Criar usuários
-u1 = Usuario(1, "Carlos Silva", "carlos@email.com")
-adm = Administrador(2, "Ana Lima", "ana@admin.com", nivel_acesso=5)
-
-biblioteca.registrar_usuario(u1)
-biblioteca.registrar_usuario(adm)
-
-# Criar livros
-l1 = Livro(1, "Dom Casmurro", "Machado de Assis")
-biblioteca.adicionar_livro(l1)
-
-# Criar empréstimo
-emp = biblioteca.realizar_emprestimo(1, usuario_id=1, livro_id=1)
-
-print(emp)
-print(u1.exibir_perfil())
-print(adm.exibir_perfil())   # POLIMORFISMO
-
-✔️ Resultado do Programa
-Empréstimo: Dom Casmurro para Carlos Silva
-Usuário: Carlos Silva (carlos@email.com)
-[ADMIN] Ana Lima - Nível 5
-
-📘 O que foi implementado?
-Requisito	Onde aparece
-Encapsulamento	Atributos iniciados com _ em todas entidades
-Herança	Administrador → Usuario
-Polimorfismo	Administrador sobrescrevendo exibir_perfil()
-Abstração	Classes abstratas Entidade e RepositorioBase
-Separação de camadas	diretórios interface / negocio / persistencia
-
-Se quiser, posso gerar:
-
-✅ Versão com banco de dados (SQLite / SQLAlchemy)
-✅ Versão com Flask / FastAPI (API REST)
-✅ Código completo das outras entidades do seu diagrama
-
-Deseja continuar?
-
-Você disse:
-faça um README com isso
-O ChatGPT disse:
-
-Aqui está um README.md completo, profissional e pronto para usar no seu projeto.
-
-📚 Sistema de Biblioteca — Python (POO + Arquitetura em Camadas)
-
-Este projeto implementa um sistema modular de biblioteca em Python, seguindo boas práticas de programação orientada a objetos e arquitetura limpa.
-
-O objetivo é demonstrar:
-
-✔️ Encapsulamento
-✔️ Herança
-✔️ Polimorfismo
-✔️ Abstração
-✔️ Separação em camadas
-✔️ Facilidade de manutenção e expansão
-
-O sistema é baseado no diagrama UML fornecido, adaptado para um modelo didático, mantendo conceitos essenciais como Usuários, Administradores, Livros e Empréstimos.
-
-📁 Estrutura do Projeto
-biblioteca/
-│
-├── interface/
-│   └── main.py               # Interface de execução
-│
-├── negocio/
-│   ├── entidades.py          # Classes de domínio
-│   ├── servicos.py           # Regras de negócio
-│   └── abstracoes.py         # Classes abstratas (abstração)
-│
-└── persistencia/
-    └── repositorio.py        # Persistência em memória
-
-🧠 Conceitos de POO Aplicados
-🔒 Encapsulamento
-
-Atributos protegidos usando _atributo, evitando acesso direto:
-
-self._nome
-self._email
-
-🧬 Herança
-
-Administrador herda de Usuario:
-
-class Administrador(Usuario):
-    ...
-
-🔁 Polimorfismo
-
-Sobrescrita de métodos (ex.: exibição do perfil):
-
-def exibir_perfil(self):
-    return f"[ADMIN] {self._nome} - Nível {self._nivel_acesso}"
-
-🧱 Abstração
-
-Uso de classes abstratas para padronização:
-
-class Entidade(ABC):
-    @abstractmethod
-    def __init__(self, id):
-        ...
-
-🏗️ Arquitetura em Camadas
-Camada	Função	Local
-Interface	Executa a aplicação	interface/main.py
-Negócio	Modelos e regras de negócio	negocio/
-Persistência	Armazenamento de dados	persistencia/
-
-Essa separação garante:
-
-Fácil manutenção
-
-Independência entre partes
-
-Substituição de módulos (ex.: trocar persistência por banco real)
-
-▶️ Como Executar
-1. Clone o repositório
-git clone https://github.com/seu-repositorio/biblioteca.git
-cd biblioteca
-
-2. Execute o programa principal
-python interface/main.py
-
-📝 Exemplo de Saída
-Empréstimo: Dom Casmurro para Carlos Silva
-Usuário: Carlos Silva (carlos@email.com)
-[ADMIN] Ana Lima - Nível 5
-
-🧩 Resumo das Classes
-📘 Livro
-
-ID
-
-Título
-
-Autor
-
-👤 Usuario
-
-Nome
-
-E-mail
-
-Exibição personalizada de perfil
-
-🛡️ Administrador (herda de Usuario)
-
-Nível de acesso
-
-Polimorfismo em exibição de perfil
-
-📦 Empréstimo
-
-Usuário
-
-Livro
-
-Data
-
-Status (aberto/finalizado)
-
-🛠️ Futuras Expansões
-
-Este projeto foi pensado para ser totalmente expansível.
-Sugestões de evolução:
-
- Persistência com banco de dados (SQLite, PostgreSQL)
-
- API REST com Flask ou FastAPI
-
- Interface gráfica (Tkinter, PySide)
-
- Autenticação e sessões
-
- Reserva, Avaliação, Histórico de Acesso (presentes no diagrama original)
-
-🤝 Contribuições
-
-Sinta-se livre para:
-
-abrir issues
-
-propor melhorias
-
-enviar pull requests
-
-📄 Licença
-
-Este projeto está disponível sob a licença MIT.
-
-Se quiser, posso gerar:
-
-📌 Arquivos prontos em formato ZIP
-📌 Versão com banco SQLite
-📌 Versão com Flask/FastAPI
-
-Deseja alguma dessas opções?
-
-Você disse:
-o que reademe
-O ChatGPT disse:
-
-Ah, entendi!
-Você está perguntando “o que é README?”
-
-Aqui vai uma explicação simples e direta:
-
-📘 O que é um README?
-
-Um README é um arquivo de texto (geralmente chamado README.md) que fica na raiz de um projeto e serve para explicar:
-
-✔️ O que é o projeto
-✔️ Como instalar
-✔️ Como executar
-✔️ Estrutura do código
-✔️ Dependências
-✔️ Exemplos de uso
-✔️ Informações para contribuir
-📍 Por que se chama README?
-
-Porque literalmente significa:
-
-"LEIA-ME"
-(READ ME)
-
-Ele é o primeiro arquivo que alguém deve ler ao abrir um projeto.
-
-📄 Extensão .md
-
-A extensão mais usada é .md, que significa Markdown, uma linguagem simples para formatar texto com:
-
-Títulos
-
-Listas
-
-Links
-
-Código-fonte
-
-Tabelas
-
-🧩 Exemplo curto de README
-# Meu Projeto Python
-
-Este projeto é um sistema de biblioteca.
-
-## Como executar
-
-python main.py
-
-
-Se quiser, posso:
-
-✔️ explicar melhor
-✔️ criar um README mais simples
-✔️ gerar README completo no seu estilo
-✔️ colocar instruções para GitHub
-
-O que você prefere?
+import sqlite3
+import getpass
+
+DB_NAME = "biblioteca.db"
+
+def conectar():
+    return sqlite3.connect(DB_NAME)
+
+def criar_tabela_usuarios():
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS Usuarios(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT,
+            email TEXT UNIQUE NOT NULL,
+            senha TEXT NOT NULL
+        );
+    """)
+    con.commit()
+    con.close()
+
+def cadastrar_usuario(nome, email, senha):
+    con = conectar()
+    cur = con.cursor()
+    try:
+        cur.execute("INSERT INTO Usuarios (nome, email, senha) VALUES (?, ?, ?)", (nome, email, senha))
+        con.commit()
+        print("Conta criada com sucesso!")
+    except sqlite3.IntegrityError:
+        print("Erro: Email já cadastrado.")
+    finally:
+        con.close()
+
+def verificar_login(email, senha):
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT * FROM Usuarios WHERE email = ? AND senha = ?", (email, senha))
+    usuario = cur.fetchone()
+    con.close()
+    return usuario
+
+def main():
+    criar_tabela_usuarios()
+    while True:
+        print("\n=== MENU ===")
+        print("1 - Login")
+        print("2 - Criar conta")
+        print("0 - Sair")
+        escolha = input("Escolha: ").strip()
+
+        if escolha == "1":
+            email = input("Email: ").strip()
+            senha = getpass.getpass("Senha: ").strip()  # oculta senha digitada
+            usuario = verificar_login(email, senha)
+            if usuario:
+                print(f"Login bem-sucedido! Bem vindo(a), {usuario[1] or 'Usuário'}!")
+                # Aqui você pode chamar sua função principal da biblioteca
+            else:
+                print("Email ou senha incorretos!")
+
+        elif escolha == "2":
+            nome = input("Nome/apelido (opcional): ").strip()
+            email = input("Email: ").strip()
+            senha = getpass.getpass("Senha (8 dígitos ou mais): ").strip()
+
+            if len(senha) < 8:
+                print("Erro: A senha deve ter no mínimo 8 caracteres.")
+                continue
+
+            cadastrar_usuario(nome, email, senha)
+
+        elif escolha == "0":
+            print("Saindo...")
+            break
+        else:
+            print("Opção inválida. Tente novamente.")
+
+if __name__ == "__main__":
+    main()
