@@ -20,4 +20,4 @@ um sistema com MySQL / PostgreSQL
 um sistema com interface gráfica (Tkinter, PyQt)
 
 um sistema web (Django / Flask)
-Misericórdia
+
